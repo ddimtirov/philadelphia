@@ -19,18 +19,21 @@ import java.io.IOException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
-class FIXInitiatorSocketChannelTest extends FIXInitiatorTest<SocketChannel> {
+class FIXInitiatorSocketChannelTest extends FIXInitiatorTest {
     @Override
     protected Channels createChannels() throws IOException {
         ServerSocketChannel acceptorServerChannel = ServerSocketChannel.open();
         acceptorServerChannel.bind(null);
 
-        Channels channels = new Channels();
-        channels.initiator = SocketChannel.open(acceptorServerChannel.getLocalAddress());
-        channels.initiator.configureBlocking(false);
+        SocketChannel initiator = SocketChannel.open(acceptorServerChannel.getLocalAddress());
+        initiator.configureBlocking(false);
 
         SocketChannel acceptor = acceptorServerChannel.accept();
         acceptor.configureBlocking(false);
+
+        Channels channels = new Channels();
+        channels.initiatorRead = initiator;
+        channels.initiatorWrite = initiator;
         channels.acceptor = acceptor;
 
         acceptorServerChannel.close();
