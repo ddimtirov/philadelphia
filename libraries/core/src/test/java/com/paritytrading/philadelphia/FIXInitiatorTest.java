@@ -24,7 +24,6 @@ import static java.util.Arrays.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
-import java.nio.channels.ByteChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.List;
@@ -51,9 +50,10 @@ abstract class FIXInitiatorTest {
     private TestConnection acceptor;
 
     static final class Channels {
-        public ReadableByteChannel initiatorRead;
-        public GatheringByteChannel initiatorWrite;
-        public ByteChannel acceptor;
+        public ReadableByteChannel initiatorRx;
+        public GatheringByteChannel initiatorTx;
+        public ReadableByteChannel acceptorRx;
+        public GatheringByteChannel acceptorTx;
     }
 
     abstract Channels createChannels() throws IOException;
@@ -67,10 +67,10 @@ abstract class FIXInitiatorTest {
 
         Channels channels = createChannels();
         initiator = new FIXConnection(
-                channels.initiatorRead, channels.initiatorWrite,
+                channels.initiatorRx, channels.initiatorTx,
                 initiatorConfig, initiatorMessages, initiatorStatus
         );
-        acceptor  = new TestConnection(channels.acceptor, acceptorMessages);
+        acceptor  = new TestConnection(channels.acceptorRx, channels.acceptorTx, acceptorMessages);
     }
 
     @Test

@@ -32,9 +32,10 @@ class FIXInitiatorSocketChannelTest extends FIXInitiatorTest {
         acceptor.configureBlocking(false);
 
         Channels channels = new Channels();
-        channels.initiatorRead = initiator;
-        channels.initiatorWrite = initiator;
-        channels.acceptor = acceptor;
+        channels.initiatorRx = initiator;
+        channels.initiatorTx = initiator;
+        channels.acceptorTx = acceptor;
+        channels.acceptorRx = acceptor;
 
         acceptorServerChannel.close();
         return channels;

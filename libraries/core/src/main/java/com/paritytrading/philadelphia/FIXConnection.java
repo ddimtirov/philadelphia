@@ -33,8 +33,8 @@ public class FIXConnection implements Closeable {
 
     private static final int CURRENT_TIMESTAMP_FIELD_CAPACITY = 24;
 
-    private final ReadableByteChannel readableChannel;
-    private final GatheringByteChannel writableChannel;
+    private final ReadableByteChannel rxChannel;
+    private final GatheringByteChannel txChannel;
 
     private final FIXConfig config;
 
@@ -90,13 +90,14 @@ public class FIXConnection implements Closeable {
     private final FIXValue currentTimestamp;
 
     /**
-     * Create a connection. The underlying socket channel can be either
-     * blocking or non-blocking.
+     * Create a connection using a single read/write channel.
+     * The underlying socket channel can be either blocking or non-blocking.
      *
      * @param channel the underlying channel
      * @param config the connection configuration
      * @param listener the inbound message listener
      * @param statusListener the inbound status event listener
+     * @param <CHANNEL> generic type for the read/write channel
      */
     public <CHANNEL extends ReadableByteChannel & GatheringByteChannel>
     FIXConnection(CHANNEL channel, FIXConfig config, FIXMessageListener listener, FIXConnectionStatusListener statusListener) {
@@ -107,16 +108,16 @@ public class FIXConnection implements Closeable {
      * Create a connection. The underlying socket channel can be either
      * blocking or non-blocking.
      *
-     * @param readChannel the channel to use for reading
-     * @param writeChannel the channel to use for writing (can be the same instance as {@code readChannel})
+     * @param rxChannel the channel to use for reading
+     * @param txChannel the channel to use for writing (can be the same instance as {@code rxChannel})
      * @param config the connection configuration
      * @param listener the inbound message listener
      * @param statusListener the inbound status event listener
      */
-    public FIXConnection(ReadableByteChannel readChannel, GatheringByteChannel writeChannel,
+    public FIXConnection(ReadableByteChannel rxChannel, GatheringByteChannel txChannel,
                          FIXConfig config, FIXMessageListener listener, FIXConnectionStatusListener statusListener) {
-        this.readableChannel = readChannel;
-        this.writableChannel = writeChannel;
+        this.rxChannel = rxChannel;
+        this.txChannel = txChannel;
 
         this.config = config;
 
@@ -394,9 +395,11 @@ public class FIXConnection implements Closeable {
      * @throws IOException if an I/O error occurs
      */
     @Override
+    @SuppressWarnings("EmptyTryBlock")
     public void close() throws IOException {
-        readableChannel.close();
-        writableChannel.close();
+        try (Closeable ignored1 = rxChannel; Closeable ignored2 = txChannel) {
+            // we just want to close both channels reliably
+        }
     }
 
     /**
@@ -408,7 +411,7 @@ public class FIXConnection implements Closeable {
      * @throws IOException if an I/O error occurs
      */
     public int receive() throws IOException {
-        int bytes = readableChannel.read(rxBuffer);
+        int bytes = rxChannel.read(rxBuffer);
 
         if (bytes <= 0)
             return bytes;
@@ -457,7 +460,7 @@ public class FIXConnection implements Closeable {
         int remaining = txHeaderBuffer.remaining() + txBodyBuffer.remaining();
 
         do {
-            remaining -= writableChannel.write(txBuffers, 0, txBuffers.length);
+            remaining -= txChannel.write(txBuffers, 0, txBuffers.length);
         } while (remaining > 0);
 
         txMsgSeqNum++;

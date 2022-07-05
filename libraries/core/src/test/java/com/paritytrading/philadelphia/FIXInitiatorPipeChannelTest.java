@@ -25,9 +25,10 @@ class FIXInitiatorPipeChannelTest extends FIXInitiatorTest {
         Pipe down = Pipe.open();
 
         Channels channels = new Channels();
-        channels.initiatorRead = down.source();
-        channels.initiatorWrite = up.sink();
-        channels.acceptor = new PipeChannel(down.sink(), up.source());
+        channels.initiatorRx = down.source();
+        channels.initiatorTx = up.sink();
+        channels.acceptorRx = up.source();
+        channels.acceptorTx = down.sink();
         return channels;
     }
 }
