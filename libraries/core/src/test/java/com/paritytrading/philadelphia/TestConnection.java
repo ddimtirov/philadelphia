@@ -76,10 +76,8 @@ class TestConnection implements Closeable {
     }
 
     @Override
-    @SuppressWarnings("EmptyTryBlock")
     public void close() throws IOException {
-        try (Closeable ignored1 = rxChannel; Closeable ignored2 = txChannel) {
-            // we just want to close both channels reliably
+        try (Closeable closingRx = rxChannel; Closeable closingTx = txChannel) {
         }
     }
 
